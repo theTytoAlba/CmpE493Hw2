@@ -8,4 +8,6 @@ public class NewsStory {
 	String body = "";
 	ArrayList<String> titleTokens = new ArrayList<>();
 	ArrayList<String> bodyTokens = new ArrayList<>();
+	ArrayList<String> topics = new ArrayList<>();
+	ArrayList<String> text = new ArrayList<>();
 }

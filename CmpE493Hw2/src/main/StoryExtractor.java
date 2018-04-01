@@ -29,10 +29,10 @@ public class StoryExtractor {
 		}
 		// Organize tokens to merge non-token entries.
 		tagTokens = organizeTagsAndStrings(tagTokens);
-		// Extract texts of stories.
-		ArrayList<ArrayList<String>> storyTexts = extractTextsAndIDs(tagTokens);
+		// Extract texts, ids, topics of stories.
+		ArrayList<NewsStory> storyInfos = extractTextsIDsTopics(tagTokens);
 		// Extract title and body of texts.
-		ArrayList<NewsStory> stories = extractTitleAndBody(storyTexts);
+		ArrayList<NewsStory> stories = extractTitleAndBody(storyInfos);
 		// Return result
 		return stories;
 	}
@@ -41,29 +41,31 @@ public class StoryExtractor {
 	 * Given story texts, extracts the title and body texts for each story.
 	 * Creates NewsStory objects with them and returns an array.
 	 */
-	private static ArrayList<NewsStory> extractTitleAndBody(ArrayList<ArrayList<String>> storyTexts) {
+	private static ArrayList<NewsStory> extractTitleAndBody(ArrayList<NewsStory> storyInfos) {
 		ArrayList<NewsStory> stories = new ArrayList<>();
-		for (ArrayList<String> storyText : storyTexts) {
+		for (NewsStory info : storyInfos) {
 			NewsStory story = new NewsStory();
 			// Set the id.
-			story.storyID = Integer.parseInt(storyText.get(0));
-			for (int i = 1; i < storyText.size(); i++) {
+			story.storyID = info.storyID;
+			// Set the topics.
+			story.topics = info.topics;
+			for (int i = 0; i < info.text.size(); i++) {
 				// Find the title
-				if(storyText.get(i).equals("<TITLE>")) {
+				if(info.text.get(i).equals("<TITLE>")) {
 					// Find the end of the title.
-					for (int j = i+1; j < storyText.size(); j++) {
-						if(storyText.get(j).equals("</TITLE>")) {
+					for (int j = i+1; j < info.text.size(); j++) {
+						if(info.text.get(j).equals("</TITLE>")) {
 							break;
 						}
-						story.title += " " + storyText.get(j);
+						story.title += " " + info.text.get(j);
 					}		
 				}
 				
 				// Find the body
-				if(storyText.get(i).equals("<BODY>")) {
+				if(info.text.get(i).equals("<BODY>")) {
 					// Find the end of the body.
-					for (int j = i+1; j < storyText.size(); j++) {
-						if(storyText.get(j).equals("</BODY>")) {
+					for (int j = i+1; j < info.text.size(); j++) {
+						if(info.text.get(j).equals("</BODY>")) {
 							// fix '<' character.
 							story.title = story.title.replaceAll("&lt;", "<");
 							story.body = story.body.replaceAll("&lt;", "<");
@@ -74,7 +76,7 @@ public class StoryExtractor {
 							stories.add(story);
 							break;
 						}
-						story.body += " " + storyText.get(j);
+						story.body += " " + info.text.get(j);
 					}		
 				}
 			}
@@ -84,18 +86,21 @@ public class StoryExtractor {
 	
 	/**
 	 * Given an organized string array of tags and non-tags,
-	 * creates an array of string arrays where
-	 * each array is one story's content (between text tags).
-	 * Initial element in every list is the id of that text.
+	 * creates an array of news stories where
+	 * the field _text_ is story's content (between text tags)
+	 * the field _storyID_ is the story's id (given as NEWID)
+	 * the field _topics_ is the array of string topics.
 	 */
-	private static ArrayList<ArrayList<String>> extractTextsAndIDs(ArrayList<String> tokens) {
-		ArrayList<ArrayList<String>> texts = new ArrayList<>();
-		String currentId = "";
+	private static ArrayList<NewsStory> extractTextsIDsTopics(ArrayList<String> tokens) {
+		ArrayList<NewsStory> stories = new ArrayList<>();
+		NewsStory story = new NewsStory();
 		for (int i = 0; i < tokens.size(); i++) {
-			ArrayList<String> newsStory = new ArrayList<>();
 			// Find the id.
 			if (tokens.get(i).contains("NEWID=\"")) {
-				currentId = "";
+				// Possible new story. Reset everything.
+				story = new NewsStory();
+				// Extract id.
+				String currentId = "";
 				for (int j = tokens.get(i).indexOf("NEWID=\"") + 7; 
 						j < tokens.get(i).length(); j++) {
 					if (tokens.get(i).charAt(j) != '"') {
@@ -104,22 +109,38 @@ public class StoryExtractor {
 						break;
 					}
 				}
+				try {
+					story.storyID = Integer.parseInt(currentId);	
+				} catch (Exception e) {
+					System.out.println("Error while getting the id of the story.");
+				}
 			}
+			// Find the topics
+			if (tokens.get(i).equals("<TOPICS>")) {
+				// Add topics between <D> and </D> until the end of the topics section.
+				for (int j = i+1; j + 1 < tokens.size(); j++) {
+					if (tokens.get(j).equals("</TOPICS>")) {
+						break;
+					}
+					if (tokens.get(j).equals("<D>") && !tokens.get(j+1).equals("</D>")) {
+						story.topics.add(tokens.get(j+1));
+					}
+				}
+			}
+			
 			// Find the beginning of the text.
 			if (tokens.get(i).equals("<TEXT>")) {
-				// Add id as the first token.
-				newsStory.add(currentId);
 				// Find the ending of the text and create the news story from tokens in between.
 				for (int j = i+1; j < tokens.size(); j++) {
 					if (tokens.get(j).equals("</TEXT>")) {
-						texts.add(newsStory);
+						stories.add(story);
 						break;
 					}
-					newsStory.add(tokens.get(j));
+					story.text.add(tokens.get(j));
 				}
 			}
 		}
-		return texts;
+		return stories;
 	}
 	
 	/**
