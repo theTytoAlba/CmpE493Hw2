@@ -17,11 +17,11 @@ public class Main {
 		// Create dictionary.
 		ArrayList<String> dictionary = createDictionary(documents);
 		// Calculate topic probabilities.
-		HashMap<String, Integer> topicProbs = calculateTopicProbabilities(documents);
+		StoryClassifier.setTopicProbabilities(calculateTopicProbabilities(documents));
 		// Count terms for each topic.
 		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
 		// Calculate probabilities of each term for each topic.
-		HashMap<String, HashMap<String, Double>> termProbabilities = calculateTermProbabilities(termCounts);
+		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts));
 	}
 
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
