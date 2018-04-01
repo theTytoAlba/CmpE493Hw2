@@ -24,8 +24,7 @@ public class Main {
 		ArrayList<ArrayList<NewsStory>> documents = new ArrayList<>();
 		System.out.println("Reading documents...");
 		// Read documents;
-		// TODO REMOVE THIS
-		for (int i = 0; i < 1/*22*/; i++) {
+		for (int i = 0; i < 22; i++) {
 			String fileName = "Dataset/reut2-0" + (i<10 ? "0" : "") + i + ".sgm";
 			printProgress("Reading document", i+1, 22);
 			documents.add(StoryExtractor.getStoriesFromDocument(fileName));

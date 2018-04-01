@@ -15,17 +15,34 @@ public class StoryTokenizer {
 	
 	/**
 	 * Takes in a story array and returns the tokenized and stemmed version of it.
+	 * Discards stories which do not follow the topic restrictions.
 	 */
 	public static ArrayList<NewsStory> tokenizeStories(ArrayList<NewsStory> stories) {
 		ArrayList<NewsStory> tokenizedStories = new ArrayList<>();
 		for (NewsStory story : stories) {
-			story.titleTokens = stem(tokenizeString(story.title));
-			story.bodyTokens = stem(tokenizeString(story.body));
-			tokenizedStories.add(story);
+			if (isWellTopiced(story)) {
+				story.titleTokens = stem(tokenizeString(story.title));
+				story.bodyTokens = stem(tokenizeString(story.body));
+				tokenizedStories.add(story);	
+			}
 		}
 		return tokenizedStories;
 	}
 	
+	/**
+	 * Checks if the story topics contain one and only one topic from the topics set.
+	 */
+	private static boolean isWellTopiced(NewsStory story) {
+		int topics = 0;
+		for (String topic : Constants.topicsSet) {
+			if (story.topics.contains(topic)) {
+				topics++;
+			}
+		}
+		return topics == 1;
+	}
+	
+
 	/**
 	 * Takes in a String array and returns the stemmed version of it.
 	 */
