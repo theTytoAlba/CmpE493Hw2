@@ -18,8 +18,42 @@ public class Main {
 		ArrayList<String> dictionary = createDictionary(documents);
 		// Calculate topic probabilities.
 		HashMap<String, Integer> topicProbs = calculateTopicProbabilities(documents);
-		
-		System.out.println(topicProbs.toString());
+		// Count terms for each class.
+		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
+	}
+
+	private static HashMap<String, HashMap<String, Integer>> countTermsPerTopic(ArrayList<String> dictionary,
+			ArrayList<ArrayList<NewsStory>> documents) {
+		System.out.println("Counting terms for topics...");
+		HashMap<String, HashMap<String, Integer>> result = new HashMap<>();
+		for (String topic : Constants.topicsSet) {
+			result.put(topic, countTermsForTopic(topic, dictionary, documents));	
+		}
+		System.out.println("Counting terms for topics DONE.");
+		return result;
+	}
+
+	private static HashMap<String, Integer> countTermsForTopic(String topic, ArrayList<String> dictionary,
+			ArrayList<ArrayList<NewsStory>> documents) {
+		HashMap<String, Integer> result = new HashMap<>();
+		System.out.println("Processing topic " + topic+ "...");
+		for (ArrayList<NewsStory> doc : documents) {
+			for (NewsStory story : doc) {
+				// Only consider TRAIN documents from this topic.
+				if (!story.lewissplit.equals("TRAIN") || !story.topics.contains(topic)) {
+					continue;
+				}
+				// Add this story to the count.
+				for (String term : story.termCounts.keySet()) {
+					if (result.containsKey(term)) {
+						result.put(term, result.get(term) + story.termCounts.get(term));
+					} else {
+						result.put(term, story.termCounts.get(term));
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
