@@ -20,7 +20,7 @@ public class Main {
 		for (int i = 0; i < 22; i++) {
 			String fileName = "Dataset/reut2-0" + (i<10 ? "0" : "") + i + ".sgm";
 			printProgress("Reading document", i+1, 22);
-			//TODO: documents.add(StoryExtractor.getStoriesFromDocument(fileName));
+			documents.add(StoryExtractor.getStoriesFromDocument(fileName));
 		}
 		System.out.println("Reading documents DONE.");
 		return documents;
