@@ -21,8 +21,24 @@ public class StoryTokenizer {
 		ArrayList<NewsStory> tokenizedStories = new ArrayList<>();
 		for (NewsStory story : stories) {
 			if (isWellTopiced(story) && isTrainingOrTest(story)) {
+				// Tokenize
 				story.titleTokens = stem(tokenizeString(story.title));
 				story.bodyTokens = stem(tokenizeString(story.body));
+				// Count terms
+				for (String token : story.titleTokens) {
+					if (story.termCounts.containsKey(token)) {
+						story.termCounts.put(token, story.termCounts.get(token) + 1);
+					} else {
+						story.termCounts.put(token, 1);
+					}
+				}
+				for (String token : story.bodyTokens) {
+					if (story.termCounts.containsKey(token)) {
+						story.termCounts.put(token, story.termCounts.get(token) + 1);
+					} else {
+						story.termCounts.put(token, 1);
+					}
+				}
 				tokenizedStories.add(story);	
 			}
 		}

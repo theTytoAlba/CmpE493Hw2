@@ -1,6 +1,7 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class NewsStory {
 	int storyID;
@@ -11,4 +12,5 @@ public class NewsStory {
 	ArrayList<String> bodyTokens = new ArrayList<>();
 	ArrayList<String> topics = new ArrayList<>();
 	ArrayList<String> text = new ArrayList<>();
+	HashMap<String, Integer> termCounts = new HashMap<>();
 }

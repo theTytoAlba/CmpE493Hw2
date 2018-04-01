@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main {
 
@@ -13,6 +14,55 @@ public class Main {
 		StoryTokenizer.setStopWords(readStopWords());
 		// Tokenize the stories.
 		documents = tokenizeStories(documents);
+		// Create dictionary.
+		ArrayList<String> dictionary = createDictionary(documents);
+		// Calculate term probabilities.
+		HashMap<String, Integer> termProbs = calculateTermProbabilities(dictionary, documents);
+	}
+
+	/**
+	 * Returns a map of the term and the number of stories that contain that term.
+	 */
+	private static HashMap<String, Integer> calculateTermProbabilities(ArrayList<String> dictionary,
+			ArrayList<ArrayList<NewsStory>> documents) {
+		HashMap<String, Integer> probs = new HashMap<>();
+		System.out.println("Calculating term probabilities...");
+		for (int i = 0; i < documents.size(); i++) {
+				for (NewsStory story : documents.get(i)) {
+					if (!story.lewissplit.equals("TRAIN")) {
+						continue;
+					}
+					for (String term : story.termCounts.keySet()) {
+						if (probs.containsKey(term)) {
+							probs.put(term, probs.get(term) + 1);
+						} else {
+							probs.put(term, 1);
+						}
+					}
+				}
+		}
+		System.out.println("Calculating term probabilities DONE.");
+		return probs;
+	}
+
+	/**
+	 * Creates an array list of all unique stemmed words in all documents.
+	 */
+	private static ArrayList<String> createDictionary(ArrayList<ArrayList<NewsStory>> documents) {
+		System.out.println("Creating dictionary...");
+		ArrayList<String> dictionary = new ArrayList<>();
+		for (int i = 0; i < documents.size(); i++) {
+			printProgress("Processing document", i+1, 22);
+			for (NewsStory story : documents.get(i)) {
+				for (String word : story.termCounts.keySet()) {
+					if (!dictionary.contains(word)) {
+						dictionary.add(word);
+					}
+				}
+			}
+		}
+		System.out.println("Creating dictionary DONE.");
+		return dictionary;
 	}
 
 	/**
