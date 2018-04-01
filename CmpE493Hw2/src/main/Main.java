@@ -1,4 +1,7 @@
 package main;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Main {
@@ -6,6 +9,8 @@ public class Main {
 	public static void main(String[] args) {
 		// Read stories from documents.
 		ArrayList<ArrayList<NewsStory>>  documents = readStoriesFromDocuments();
+		// Read the stop words.
+		StoryTokenizer.setStopWords(readStopWords());
 	}
 
 	/**
@@ -40,5 +45,24 @@ public class Main {
 			System.out.print("-");
 		}
 		System.out.println("]");
+	}
+	
+	/**
+	 * Reads stop words from the location in Constants.
+	 */
+	private static ArrayList<String> readStopWords() {
+		ArrayList<String> stopwords = new ArrayList<>();
+		System.out.println("Reading stop words...");
+		try (BufferedReader br = new BufferedReader(new FileReader(Constants.stopWordsLocation))) {
+			String line;
+		    while ((line = br.readLine()) != null) {
+		    		stopwords.add(line.trim());
+		    }
+		} catch (IOException e) {
+			System.out.println("Error while reading stopwords form Dataset/stopwords.txt");
+			e.printStackTrace();
+		}
+		System.out.println("Reading stop words DONE.");
+		return stopwords;
 	}
 }
