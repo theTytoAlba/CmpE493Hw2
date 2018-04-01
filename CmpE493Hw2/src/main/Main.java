@@ -22,6 +22,10 @@ public class Main {
 		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
 		// Calculate probabilities of each term for each topic.
 		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts));
+		// Try to classify test stories.
+		System.out.println("Classifying test documents...");
+		StoryClassifier.classifyTestDocuments(documents);
+		System.out.println("Classifying test documents DONE.");
 	}
 
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
@@ -89,8 +93,9 @@ public class Main {
 	/**
 	 * Returns a map of the topic and the number of stories that contain that topic.
 	 */
-	private static HashMap<String, Integer> calculateTopicProbabilities(ArrayList<ArrayList<NewsStory>> documents) {
+	private static HashMap<String, Double> calculateTopicProbabilities(ArrayList<ArrayList<NewsStory>> documents) {
 		HashMap<String, Integer> probs = new HashMap<>();
+		int storyCount = 0;
 		for (String topic : Constants.topicsSet) {
 			probs.put(topic, 0);
 		}
@@ -100,6 +105,7 @@ public class Main {
 					if (!story.lewissplit.equals("TRAIN")) {
 						continue;
 					}
+					storyCount++;
 					for (String topic : Constants.topicsSet) {
 						if (story.topics.contains(topic)) {
 							probs.put(topic, probs.get(topic) + 1);	
@@ -107,8 +113,12 @@ public class Main {
 					}
 				}
 		}
+		HashMap<String, Double> result = new HashMap<>();
+		for (String topic : probs.keySet()) {
+			result.put(topic, Math.log(probs.get(topic)/(double)storyCount));
+		}
 		System.out.println("Calculating topic probabilities DONE.");
-		return probs;
+		return result;
 	}
 
 	/**
