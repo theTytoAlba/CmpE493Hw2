@@ -16,32 +16,34 @@ public class Main {
 		documents = tokenizeStories(documents);
 		// Create dictionary.
 		ArrayList<String> dictionary = createDictionary(documents);
-		// Calculate term probabilities.
-		HashMap<String, Integer> termProbs = calculateTermProbabilities(dictionary, documents);
+		// Calculate topic probabilities.
+		HashMap<String, Integer> topicProbs = calculateTopicProbabilities(documents);
+		
+		System.out.println(topicProbs.toString());
 	}
 
 	/**
-	 * Returns a map of the term and the number of stories that contain that term.
+	 * Returns a map of the topic and the number of stories that contain that topic.
 	 */
-	private static HashMap<String, Integer> calculateTermProbabilities(ArrayList<String> dictionary,
-			ArrayList<ArrayList<NewsStory>> documents) {
+	private static HashMap<String, Integer> calculateTopicProbabilities(ArrayList<ArrayList<NewsStory>> documents) {
 		HashMap<String, Integer> probs = new HashMap<>();
-		System.out.println("Calculating term probabilities...");
+		for (String topic : Constants.topicsSet) {
+			probs.put(topic, 0);
+		}
+		System.out.println("Calculating topic probabilities...");
 		for (int i = 0; i < documents.size(); i++) {
 				for (NewsStory story : documents.get(i)) {
 					if (!story.lewissplit.equals("TRAIN")) {
 						continue;
 					}
-					for (String term : story.termCounts.keySet()) {
-						if (probs.containsKey(term)) {
-							probs.put(term, probs.get(term) + 1);
-						} else {
-							probs.put(term, 1);
+					for (String topic : Constants.topicsSet) {
+						if (story.topics.contains(topic)) {
+							probs.put(topic, probs.get(topic) + 1);	
 						}
 					}
 				}
 		}
-		System.out.println("Calculating term probabilities DONE.");
+		System.out.println("Calculating topic probabilities DONE.");
 		return probs;
 	}
 
