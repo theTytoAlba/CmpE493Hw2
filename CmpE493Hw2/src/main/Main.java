@@ -11,6 +11,8 @@ public class Main {
 		ArrayList<ArrayList<NewsStory>>  documents = readStoriesFromDocuments();
 		// Read the stop words.
 		StoryTokenizer.setStopWords(readStopWords());
+		// Tokenize the stories.
+		documents = tokenizeStories(documents);			
 	}
 
 	/**
@@ -64,5 +66,21 @@ public class Main {
 		}
 		System.out.println("Reading stop words DONE.");
 		return stopwords;
+	}
+	
+	/**
+	 * Given an array containing the story arrays for each document,
+	 * iterates the array and tokenizes and stems each story.
+	 */
+	private static ArrayList<ArrayList<NewsStory>> tokenizeStories(ArrayList<ArrayList<NewsStory>> documents) {
+		ArrayList<ArrayList<NewsStory>> tokenizedDocuments = new ArrayList<>();
+		System.out.println("Tokenizing documents...");
+		// Tokenize documents;
+		for (int i = 0; i < documents.size(); i++) {
+			printProgress("Tokenizing document", i+1, 22);
+			tokenizedDocuments.add(StoryTokenizer.tokenizeStories(documents.get(i)));
+		}
+		System.out.println("Tokenizing documents DONE.");
+		return tokenizedDocuments;
 	}
 }
