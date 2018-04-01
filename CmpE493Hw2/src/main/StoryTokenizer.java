@@ -20,7 +20,7 @@ public class StoryTokenizer {
 	public static ArrayList<NewsStory> tokenizeStories(ArrayList<NewsStory> stories) {
 		ArrayList<NewsStory> tokenizedStories = new ArrayList<>();
 		for (NewsStory story : stories) {
-			if (isWellTopiced(story)) {
+			if (isWellTopiced(story) && isTrainingOrTest(story)) {
 				story.titleTokens = stem(tokenizeString(story.title));
 				story.bodyTokens = stem(tokenizeString(story.body));
 				tokenizedStories.add(story);	
@@ -29,6 +29,13 @@ public class StoryTokenizer {
 		return tokenizedStories;
 	}
 	
+	/**
+	 * Checks if the story belongs to TRAIN or TEST lewis types.
+	 */
+	private static boolean isTrainingOrTest(NewsStory story) {
+		return story.lewissplit.equals("TRAIN") || story.lewissplit.equals("TEST");
+	}
+
 	/**
 	 * Checks if the story topics contain one and only one topic from the topics set.
 	 */
