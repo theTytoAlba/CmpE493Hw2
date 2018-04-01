@@ -30,7 +30,7 @@ public class StoryExtractor {
 		// Organize tokens to merge non-token entries.
 		tagTokens = organizeTagsAndStrings(tagTokens);
 		// Extract texts, ids, topics of stories.
-		ArrayList<NewsStory> storyInfos = extractTextsIDsTopics(tagTokens);
+		ArrayList<NewsStory> storyInfos = extractTextsIDsTopicsLewis(tagTokens);
 		// Extract title and body of texts.
 		ArrayList<NewsStory> stories = extractTitleAndBody(storyInfos);
 		// Return result
@@ -49,6 +49,9 @@ public class StoryExtractor {
 			story.storyID = info.storyID;
 			// Set the topics.
 			story.topics = info.topics;
+			// Set the lewis variable
+			story.lewissplit = info.lewissplit;
+			
 			for (int i = 0; i < info.text.size(); i++) {
 				// Find the title
 				if(info.text.get(i).equals("<TITLE>")) {
@@ -89,9 +92,10 @@ public class StoryExtractor {
 	 * creates an array of news stories where
 	 * the field _text_ is story's content (between text tags)
 	 * the field _storyID_ is the story's id (given as NEWID)
+	 * the field _lewissplit_ is the story's type (given as LEWISSPLIT)
 	 * the field _topics_ is the array of string topics.
 	 */
-	private static ArrayList<NewsStory> extractTextsIDsTopics(ArrayList<String> tokens) {
+	private static ArrayList<NewsStory> extractTextsIDsTopicsLewis(ArrayList<String> tokens) {
 		ArrayList<NewsStory> stories = new ArrayList<>();
 		NewsStory story = new NewsStory();
 		for (int i = 0; i < tokens.size(); i++) {
@@ -114,6 +118,17 @@ public class StoryExtractor {
 				} catch (Exception e) {
 					System.out.println("Error while getting the id of the story.");
 				}
+				// Get LEWISSPLIT variable and set as training or test.
+				String lewis = "";
+				for (int j = tokens.get(i).indexOf("LEWISSPLIT=\"") + 12; 
+						j < tokens.get(i).length(); j++) {
+					if (tokens.get(i).charAt(j) != '"') {
+						lewis += tokens.get(i).charAt(j);
+					} else {
+						break;
+					}
+				}
+				story.lewissplit = lewis;
 			}
 			// Find the topics
 			if (tokens.get(i).equals("<TOPICS>")) {

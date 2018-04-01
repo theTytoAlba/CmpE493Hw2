@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class NewsStory {
 	int storyID;
+	String lewissplit;
 	String  title = "";
 	String body = "";
 	ArrayList<String> titleTokens = new ArrayList<>();
