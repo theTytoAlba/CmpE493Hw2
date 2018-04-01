@@ -18,8 +18,38 @@ public class Main {
 		ArrayList<String> dictionary = createDictionary(documents);
 		// Calculate topic probabilities.
 		HashMap<String, Integer> topicProbs = calculateTopicProbabilities(documents);
-		// Count terms for each class.
+		// Count terms for each topic.
 		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
+		// Calculate probabilities of each term for each topic.
+		HashMap<String, HashMap<String, Double>> termProbabilities = calculateTermProbabilities(termCounts);
+	}
+
+	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
+			HashMap<String, HashMap<String, Integer>> termCounts) {
+		System.out.println("Calculating probabilities of terms...");
+		HashMap<String, HashMap<String, Double>> result = new HashMap<>();
+		for (String topic : Constants.topicsSet) {
+			System.out.println("Calculating probabilities for topic " + topic + "...");
+			result.put(topic, calculateTermProbabilitiesForTopic(termCounts.get(topic)));	
+		}		
+		System.out.println("Calculating probabilities of terms DONE.");
+		return result;
+	}
+
+	private static HashMap<String, Double> calculateTermProbabilitiesForTopic(HashMap<String, Integer> termCountsOfTopic) {
+		HashMap<String, Double> probs = new HashMap<>();
+		for (String term : termCountsOfTopic.keySet()) {
+			// Numerator: number of times this term occurs in this topic + 1.
+			int numerator = termCountsOfTopic.get(term) + 1;
+			// Denominator: total number of terms in this topic + dictionary size.
+			int denominator = 0;
+			for (int count : termCountsOfTopic.values()) {
+				denominator += count;
+			}
+			denominator += termCountsOfTopic.size();
+			probs.put(term, Math.log(numerator/(double)denominator));
+		}
+		return probs;
 	}
 
 	private static HashMap<String, HashMap<String, Integer>> countTermsPerTopic(ArrayList<String> dictionary,
