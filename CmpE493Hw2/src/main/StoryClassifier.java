@@ -30,7 +30,6 @@ public class StoryClassifier {
 							currentType = Constants.topicsSet[i];
 						}
 					}
-					//System.out.println("Document with id " + story.storyID + " is of type " + story.topics.toString() + " and is classified as " + currentType);
 					if (story.topics.contains(currentType)) {
 						correct++;
 					}
@@ -38,7 +37,7 @@ public class StoryClassifier {
 				}
 			}
 		}
-		System.out.println("Correctness: " + correct + "/" + total );
+		System.out.println("Correctness: " + correct + "/" + total + "=" + correct/(double)total);
 	}
 
 	private static double calculateProbForTopic(String topic, NewsStory story) {

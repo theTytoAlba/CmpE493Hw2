@@ -55,7 +55,7 @@ public class StoryTokenizer {
 	/**
 	 * Checks if the story topics contain one and only one topic from the topics set.
 	 */
-	private static boolean isWellTopiced(NewsStory story) {
+	public static boolean isWellTopiced(NewsStory story) {
 		int topics = 0;
 		for (String topic : Constants.topicsSet) {
 			if (story.topics.contains(topic)) {
@@ -94,6 +94,7 @@ public class StoryTokenizer {
 		text = text.replaceAll("\\.", " ");
 		text = text.replaceAll("\\,", " ");
 		text = text.replaceAll("\\'", " ");
+		text = text.replaceAll("\"", " ");
 		text = text.replaceAll("\\/", " ");
 		text = text.replaceAll("\\-", " ");
 		text = text.replaceAll("\\_", " ");

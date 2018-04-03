@@ -4,6 +4,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Main {
 
@@ -26,6 +28,146 @@ public class Main {
 		System.out.println("Classifying test documents...");
 		StoryClassifier.classifyTestDocuments(documents);
 		System.out.println("Classifying test documents DONE.");
+		HashMap<String, HashMap<String, Double>> mutualInfos = calculateMutualInformation(documents, dictionary);
+		Set<String> distinctiveTerms = new HashSet<>();
+		for (String topic : Constants.topicsSet) {
+			distinctiveTerms.addAll(mutualInfos.get(topic).keySet());
+		}
+		System.out.println("Updating documents with mutual information...");
+		ArrayList<ArrayList<NewsStory>> updatedDocuments = updateDocumentsWithWords(documents, distinctiveTerms);
+		// Create dictionary.
+		System.out.println("Creating dictionary with mutual information...");
+		ArrayList<String> updatedDictionary = createDictionary(updatedDocuments);
+		System.out.println("Updating term counts with mutual information...");
+		HashMap<String, HashMap<String, Integer>> updatedTermCounts = countTermsPerTopic(updatedDictionary, updatedDocuments);
+		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts));
+		System.out.println("Classifying test documents with mutual information...");
+		StoryClassifier.classifyTestDocuments(updatedDocuments);
+		System.out.println("Classifying test documents with mutual information DONE.");	
+	
+	}
+
+	private static ArrayList<ArrayList<NewsStory>> updateDocumentsWithWords(ArrayList<ArrayList<NewsStory>> documents,
+			Set<String> distinctiveTerms) {
+		ArrayList<ArrayList<NewsStory>> updatedDocuments = new ArrayList<>();
+		for (ArrayList<NewsStory> doc : documents) {
+			ArrayList<NewsStory> updatedDoc = new ArrayList<>();
+			for (NewsStory story : doc) {
+				NewsStory updatedStory = new NewsStory();
+				updatedStory.storyID = story.storyID;
+				updatedStory.lewissplit = story.lewissplit;
+				updatedStory.topics = story.topics;
+				for (String token : story.titleTokens) {
+					if (distinctiveTerms.contains(token)) {
+						updatedStory.titleTokens.add(token);
+					}
+				}
+				for (String token : story.bodyTokens) {
+					if (distinctiveTerms.contains(token)) {
+						updatedStory.bodyTokens.add(token);
+					}
+				}
+				updatedDoc.add(updatedStory);
+			}
+			updatedDocuments.add(updatedDoc);
+		}
+		return updatedDocuments;
+	}
+
+	private static HashMap<String, HashMap<String, Double>> calculateMutualInformation(ArrayList<ArrayList<NewsStory>> documents,
+			ArrayList<String> dictionary) {
+		System.out.println("Creating term counts data...");
+		HashMap<String, HashMap<String, Integer>> termCounts = new HashMap<>();
+		HashMap<String, Integer> documentCounts = new HashMap<>();
+		for (String topic : Constants.topicsSet) {
+			termCounts.put(topic, new HashMap<String, Integer>());
+			documentCounts.put(topic, 0);
+		}
+		for (ArrayList<NewsStory> doc : documents) {
+			for (NewsStory story : doc) {
+				if (!story.lewissplit.equals("TRAIN")) {
+					continue;
+				}
+				// Get the topic.
+				String currentTopic = "";
+				for (String topic : Constants.topicsSet) {
+					currentTopic = story.topics.contains(topic) ? topic : currentTopic; 
+				}
+				// Update counts for this topic with this story's terms.
+				for (String term: story.termCounts.keySet()) {
+					if (termCounts.get(currentTopic).containsKey(term)) {
+						termCounts.get(currentTopic).put(term, termCounts.get(currentTopic).get(term) + 1);
+					} else {
+						termCounts.get(currentTopic).put(term, 1);	
+					}
+				}
+				// Update total document number for topic
+				documentCounts.put(currentTopic, documentCounts.get(currentTopic) + 1);
+			}
+		}
+		int totalDocCount = 0;
+		for (String topic : Constants.topicsSet) {
+			totalDocCount += documentCounts.get(topic);
+		}
+		System.out.println("Creating term counts data DONE.");
+		
+		HashMap<String, HashMap<String, Double>> allMutualInfos = new HashMap<>();
+		System.out.println("Calculating mutual information...");
+		for (String topic : Constants.topicsSet) {
+			System.out.println("Calculating mutual information for " + topic + "...");
+			HashMap<String, Double> mutualInfos = new HashMap<>();
+			for (String term : termCounts.get(topic).keySet()) {
+				int yTermYTopic = termCounts.get(topic).get(term);
+				int yTermNTopic = 0;
+				for (String _topic : Constants.topicsSet) {
+					if (!_topic.equals(topic) && termCounts.get(_topic).containsKey(term)) {
+						yTermNTopic += termCounts.get(_topic).get(term);
+					}
+				}		
+				int nTermYTopic = documentCounts.get(topic) - yTermYTopic;
+				int nTermNTopic = 0;
+				for (String _topic : Constants.topicsSet) {
+					if (!_topic.equals(topic) && !termCounts.get(_topic).containsKey(term)) {
+						nTermNTopic += documentCounts.get(_topic);
+					}
+				}
+				
+				double part1 = (yTermYTopic/(double)totalDocCount) 
+						* Math.log((yTermYTopic*totalDocCount) / (double)((yTermYTopic + yTermNTopic)*(yTermYTopic + nTermYTopic)));
+				double part2 = (nTermYTopic/(double)totalDocCount) 
+						* Math.log((nTermYTopic*totalDocCount) / (double)((nTermYTopic + nTermNTopic)*(yTermYTopic + nTermYTopic)));
+				double part3 = (yTermNTopic/(double)totalDocCount) 
+						* Math.log((yTermNTopic*totalDocCount) / (double)((yTermYTopic + yTermNTopic)*(yTermNTopic + nTermNTopic)));
+				double part4 = (nTermNTopic/(double)totalDocCount) 
+						* Math.log((nTermNTopic*totalDocCount) / (double)((nTermYTopic + nTermNTopic)*(yTermNTopic + nTermNTopic)));
+						
+				double mutualInformation = part1 + part2 + part3 + part4;
+				// The term only occurs in the documents belonging to topic, maximum mutual information.
+				if (yTermNTopic == 0) {
+					mutualInformation = Double.MAX_VALUE;
+				}
+				// There are no documents that do not contain this term in other topics, minimum mutual information.
+				if (nTermNTopic == 0) {
+					mutualInformation = Double.MIN_VALUE;
+				}
+				
+				if (mutualInfos.size() < 50) {
+					mutualInfos.put(term, mutualInformation);
+				} else {
+					for (String key : mutualInfos.keySet()) {
+						if (mutualInfos.get(key) < mutualInformation) {
+							mutualInfos.remove(key);
+							mutualInfos.put(term, mutualInformation);
+							break;
+						}
+					}
+				}
+			}
+			allMutualInfos.put(topic, mutualInfos);
+		}
+		System.out.println("Calculating mutual information DONE.");
+		//System.out.println(allMutualInfos.toString());
+		return allMutualInfos;
 	}
 
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
