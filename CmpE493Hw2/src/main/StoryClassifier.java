@@ -20,21 +20,22 @@ public class StoryClassifier {
 		int total = 0;
 		for (ArrayList<NewsStory> doc : documents) {
 			for (NewsStory story : doc) {
-				if (story.lewissplit.equals("TEST")) {
-					String currentType = Constants.topicsSet.get(0);
-					double currentProb = calculateProbForTopic(Constants.topicsSet.get(0), story);
-					for (int i = 1; i < 5; i++) {
-						double newProb = calculateProbForTopic(Constants.topicsSet.get(i), story);
-						if (newProb > currentProb) {
-							currentProb = newProb;
-							currentType = Constants.topicsSet.get(i);
-						}
-					}
-					if (story.topic.equals(currentType)) {
-						correct++;
-					}
-					total++;
+				if (!story.lewissplit.equals("TEST")) {
+					continue;
 				}
+				String currentType = Constants.topicsSet.get(0);
+				double currentProb = calculateProbForTopic(Constants.topicsSet.get(0), story);
+				for (int i = 1; i < 5; i++) {
+					double newProb = calculateProbForTopic(Constants.topicsSet.get(i), story);
+					if (newProb > currentProb) {
+						currentProb = newProb;
+						currentType = Constants.topicsSet.get(i);
+					}
+				}
+				if (story.topic.equals(currentType)) {
+					correct++;
+				}
+				total++;
 			}
 		}
 		System.out.println("Correctness: " + correct + "/" + total + "=" + correct/(double)total);

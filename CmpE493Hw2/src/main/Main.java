@@ -16,6 +16,30 @@ public class Main {
 		StoryTokenizer.setStopWords(readStopWords());
 		// Tokenize the stories.
 		documents = tokenizeStories(documents);
+		
+		HashMap<String, Integer> mapTest = new HashMap<>();
+		HashMap<String, Integer> mapTrain = new HashMap<>();
+		for (String topic : Constants.topicsSet) {
+			mapTest.put(topic, 0);
+			mapTrain.put(topic, 0);
+		}
+		for (ArrayList<NewsStory> doc :documents) {
+			for (NewsStory story : doc) {
+				if (story.lewissplit.equals("TEST")) {
+					mapTest.put(story.topic, mapTest.get(story.topic)+1);
+				}
+				if (story.lewissplit.equals("TRAIN")) {
+					//System.out.println(story.storyID);
+					mapTrain.put(story.topic, mapTrain.get(story.topic)+1);
+				}
+				
+			}
+		}
+		
+		System.out.println("test" + mapTest.toString() + "train" + mapTrain.toString());
+		if (true) {
+			return;	
+		}
 		// Create dictionary.
 		ArrayList<String> dictionary = createDictionary(documents);
 		// Calculate topic probabilities.
@@ -23,7 +47,7 @@ public class Main {
 		// Count terms for each topic.
 		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
 		// Calculate probabilities of each term for each topic.
-		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts));
+		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts, dictionary.size()));
 		// Try to classify test stories.
 		System.out.println("Classifying test documents...");
 		StoryClassifier.classifyTestDocuments(documents);
@@ -34,13 +58,14 @@ public class Main {
 			distinctiveTerms.addAll(mutualInfos.get(topic).keySet());
 		}
 		System.out.println("Updating documents with mutual information...");
+		//System.out.println(distinctiveTerms.size() + "AAA");
 		ArrayList<ArrayList<NewsStory>> updatedDocuments = updateDocumentsWithWords(documents, distinctiveTerms);
 		// Create dictionary.
 		System.out.println("Creating dictionary with mutual information...");
 		ArrayList<String> updatedDictionary = createDictionary(updatedDocuments);
 		System.out.println("Updating term counts with mutual information...");
 		HashMap<String, HashMap<String, Integer>> updatedTermCounts = countTermsPerTopic(updatedDictionary, updatedDocuments);
-		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts));
+		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts, updatedDictionary.size()));
 		System.out.println("Classifying test documents with mutual information...");
 		StoryClassifier.classifyTestDocuments(updatedDocuments);
 		System.out.println("Classifying test documents with mutual information DONE.");	
@@ -115,14 +140,14 @@ public class Main {
 			HashMap<String, Double> mutualInfos = new HashMap<>();
 			for (String term : termCounts.get(topic).keySet()) {
 				int yTermYTopic = termCounts.get(topic).get(term);
-				int yTermNTopic = 0;
+				int yTermNTopic = 1;//0;
 				for (String _topic : Constants.topicsSet) {
 					if (!_topic.equals(topic) && termCounts.get(_topic).containsKey(term)) {
 						yTermNTopic += termCounts.get(_topic).get(term);
 					}
 				}		
 				int nTermYTopic = documentCounts.get(topic) - yTermYTopic;
-				int nTermNTopic = 0;
+				int nTermNTopic = 1;//0;
 				for (String _topic : Constants.topicsSet) {
 					if (!_topic.equals(topic) && !termCounts.get(_topic).containsKey(term)) {
 						nTermNTopic += documentCounts.get(_topic);
@@ -151,35 +176,43 @@ public class Main {
 				if (mutualInfos.size() < 50) {
 					mutualInfos.put(term, mutualInformation);
 				} else {
+					String minKey = (String) mutualInfos.keySet().toArray()[0];
+					double minVal = mutualInfos.get(minKey);
 					for (String key : mutualInfos.keySet()) {
-						if (mutualInfos.get(key) < mutualInformation) {
-							mutualInfos.remove(key);
-							mutualInfos.put(term, mutualInformation);
-							break;
-						}
+						if (minVal > mutualInfos.get(key)) {
+							minVal = mutualInfos.get(key);
+							minKey = key;
+						}	
+					}
+					//System.out.println(minVal + "AAAAAKSDJFSKLFJ");
+					if (minVal < mutualInformation) {
+						System.out.println("aaa" + minVal + " " + mutualInformation);
+						mutualInfos.remove(minKey);
+						mutualInfos.put(term, mutualInformation);
 					}
 				}
 			}
 			allMutualInfos.put(topic, mutualInfos);
 		}
 		System.out.println("Calculating mutual information DONE.");
-		//System.out.println(allMutualInfos.toString());
+		System.out.println(allMutualInfos.toString());
 		return allMutualInfos;
 	}
 
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
-			HashMap<String, HashMap<String, Integer>> termCounts) {
+			HashMap<String, HashMap<String, Integer>> termCounts, int dictionarySize) {
 		System.out.println("Calculating probabilities of terms...");
 		HashMap<String, HashMap<String, Double>> result = new HashMap<>();
 		for (String topic : Constants.topicsSet) {
-			System.out.println("Calculating probabilities for topic " + topic + "...");
-			result.put(topic, calculateTermProbabilitiesForTopic(termCounts.get(topic)));	
+			//System.out.println("Calculating probabilities for topic " + topic + "...");
+			result.put(topic, calculateTermProbabilitiesForTopic(termCounts.get(topic), dictionarySize));	
 		}		
 		System.out.println("Calculating probabilities of terms DONE.");
+		//System.out.println(termCounts.keySet().toString());
 		return result;
 	}
 
-	private static HashMap<String, Double> calculateTermProbabilitiesForTopic(HashMap<String, Integer> termCountsOfTopic) {
+	private static HashMap<String, Double> calculateTermProbabilitiesForTopic(HashMap<String, Integer> termCountsOfTopic, int dictionarySize) {
 		HashMap<String, Double> probs = new HashMap<>();
 		for (String term : termCountsOfTopic.keySet()) {
 			// Numerator: number of times this term occurs in this topic + 1.
@@ -189,7 +222,7 @@ public class Main {
 			for (int count : termCountsOfTopic.values()) {
 				denominator += count;
 			}
-			denominator += termCountsOfTopic.size();
+			denominator += dictionarySize;
 			probs.put(term, Math.log(numerator/(double)denominator));
 		}
 		return probs;
@@ -269,6 +302,10 @@ public class Main {
 		for (int i = 0; i < documents.size(); i++) {
 			printProgress("Processing document", i+1, 22);
 			for (NewsStory story : documents.get(i)) {
+				// Only consider files for training.
+				if (!story.lewissplit.equals("TRAIN")) {
+					continue;
+				}
 				for (String word : story.termCounts.keySet()) {
 					if (!dictionary.contains(word)) {
 						dictionary.add(word);
@@ -291,7 +328,6 @@ public class Main {
 		// Read documents;
 		for (int i = 0; i < 22; i++) {
 			String fileName = "Dataset/reut2-0" + (i<10 ? "0" : "") + i + ".sgm";
-			printProgress("Reading document", i+1, 22);
 			documents.add(StoryExtractor.getStoriesFromDocument(fileName));
 		}
 		System.out.println("Reading documents DONE.");

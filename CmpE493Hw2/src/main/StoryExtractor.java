@@ -54,7 +54,7 @@ public class StoryExtractor {
 			
 			for (int i = 0; i < info.text.size(); i++) {
 				// Find the title
-				if(info.text.get(i).equals("<TITLE>")) {
+				if(info.text.get(i).contains("<TITLE")) {
 					// Find the end of the title.
 					for (int j = i+1; j < info.text.size(); j++) {
 						if(info.text.get(j).equals("</TITLE>")) {
@@ -63,9 +63,8 @@ public class StoryExtractor {
 						story.title += " " + info.text.get(j);
 					}		
 				}
-				
 				// Find the body
-				if(info.text.get(i).equals("<BODY>")) {
+				if(info.text.get(i).contains("<BODY")) {
 					// Find the end of the body.
 					for (int j = i+1; j < info.text.size(); j++) {
 						if(info.text.get(j).equals("</BODY>")) {
@@ -75,14 +74,14 @@ public class StoryExtractor {
 							// Fix end of file character.
 							story.title = story.title.replaceAll("&#3;", "");
 							story.body = story.body.replaceAll("&#3;", "");
-							// Add story to story list.
-							stories.add(story);
 							break;
 						}
 						story.body += " " + info.text.get(j);
 					}		
 				}
 			}
+			// Add story to story list.
+			stories.add(story);
 		}
 		return stories;
 	}
@@ -149,7 +148,7 @@ public class StoryExtractor {
 			}
 			
 			// Find the beginning of the text.
-			if (tokens.get(i).equals("<TEXT>")) {
+			if (tokens.get(i).contains("<TEXT")) {
 				// Find the ending of the text and create the news story from tokens in between.
 				for (int j = i+1; j < tokens.size(); j++) {
 					if (tokens.get(j).equals("</TEXT>")) {
