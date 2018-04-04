@@ -47,8 +47,8 @@ public class StoryExtractor {
 			NewsStory story = new NewsStory();
 			// Set the id.
 			story.storyID = info.storyID;
-			// Set the topics.
-			story.topics = info.topics;
+			// Set the topic.
+			story.topic = info.topic;
 			// Set the lewis variable
 			story.lewissplit = info.lewissplit;
 			
@@ -133,13 +133,18 @@ public class StoryExtractor {
 			// Find the topics
 			if (tokens.get(i).equals("<TOPICS>")) {
 				// Add topics between <D> and </D> until the end of the topics section.
+				ArrayList<String> possibleTopics = new ArrayList<>();
 				for (int j = i+1; j + 1 < tokens.size(); j++) {
 					if (tokens.get(j).equals("</TOPICS>")) {
 						break;
 					}
-					if (tokens.get(j).equals("<D>") && !tokens.get(j+1).equals("</D>")) {
-						story.topics.add(tokens.get(j+1));
+					if (tokens.get(j).equals("<D>") && !tokens.get(j+1).equals("</D>") && Constants.topicsSet.contains(tokens.get(j+1))) {
+						possibleTopics.add(tokens.get(j+1));
 					}
+				}
+				// Only consider stories with one proper topic.
+				if (possibleTopics.size() == 1) {
+					story.topic = possibleTopics.get(0);
 				}
 			}
 			

@@ -56,7 +56,7 @@ public class Main {
 				NewsStory updatedStory = new NewsStory();
 				updatedStory.storyID = story.storyID;
 				updatedStory.lewissplit = story.lewissplit;
-				updatedStory.topics = story.topics;
+				updatedStory.topic = story.topic;
 				for (String token : story.titleTokens) {
 					if (distinctiveTerms.contains(token)) {
 						updatedStory.titleTokens.add(token);
@@ -89,10 +89,7 @@ public class Main {
 					continue;
 				}
 				// Get the topic.
-				String currentTopic = "";
-				for (String topic : Constants.topicsSet) {
-					currentTopic = story.topics.contains(topic) ? topic : currentTopic; 
-				}
+				String currentTopic = story.topic; 
 				// Update counts for this topic with this story's terms.
 				for (String term: story.termCounts.keySet()) {
 					if (termCounts.get(currentTopic).containsKey(term)) {
@@ -216,7 +213,7 @@ public class Main {
 		for (ArrayList<NewsStory> doc : documents) {
 			for (NewsStory story : doc) {
 				// Only consider TRAIN documents from this topic.
-				if (!story.lewissplit.equals("TRAIN") || !story.topics.contains(topic)) {
+				if (!story.lewissplit.equals("TRAIN") || !story.topic.equals(topic)) {
 					continue;
 				}
 				// Add this story to the count.
@@ -249,7 +246,7 @@ public class Main {
 					}
 					storyCount++;
 					for (String topic : Constants.topicsSet) {
-						if (story.topics.contains(topic)) {
+						if (story.topic.equals(topic)) {
 							probs.put(topic, probs.get(topic) + 1);	
 						}
 					}

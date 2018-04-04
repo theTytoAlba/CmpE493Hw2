@@ -10,7 +10,7 @@ public class NewsStory {
 	String body = "";
 	ArrayList<String> titleTokens = new ArrayList<>();
 	ArrayList<String> bodyTokens = new ArrayList<>();
-	ArrayList<String> topics = new ArrayList<>();
+	String topic = "";
 	ArrayList<String> text = new ArrayList<>();
 	HashMap<String, Integer> termCounts = new HashMap<>();
 }

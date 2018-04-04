@@ -1,6 +1,9 @@
 package main;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class Constants {
 	public static String stopWordsLocation = "Dataset/stopwords.txt";
-	public static String[] topicsSet = {"earn", "acq", "money-fx", "grain", "crude"};
+	public static ArrayList<String> topicsSet = new ArrayList<>(Arrays.asList("earn", "acq", "money-fx", "grain", "crude"));
 }

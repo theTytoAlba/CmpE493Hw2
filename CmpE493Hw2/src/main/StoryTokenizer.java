@@ -20,7 +20,7 @@ public class StoryTokenizer {
 	public static ArrayList<NewsStory> tokenizeStories(ArrayList<NewsStory> stories) {
 		ArrayList<NewsStory> tokenizedStories = new ArrayList<>();
 		for (NewsStory story : stories) {
-			if (isWellTopiced(story) && isTrainingOrTest(story)) {
+			if (!story.topic.equals("") && isTrainingOrTest(story)) {
 				// Tokenize
 				story.titleTokens = stem(tokenizeString(story.title));
 				story.bodyTokens = stem(tokenizeString(story.body));
@@ -50,19 +50,6 @@ public class StoryTokenizer {
 	 */
 	private static boolean isTrainingOrTest(NewsStory story) {
 		return story.lewissplit.equals("TRAIN") || story.lewissplit.equals("TEST");
-	}
-
-	/**
-	 * Checks if the story topics contain one and only one topic from the topics set.
-	 */
-	public static boolean isWellTopiced(NewsStory story) {
-		int topics = 0;
-		for (String topic : Constants.topicsSet) {
-			if (story.topics.contains(topic)) {
-				topics++;
-			}
-		}
-		return topics == 1;
 	}
 	
 
