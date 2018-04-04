@@ -17,33 +17,31 @@ public class Main {
 		// Tokenize the stories.
 		documents = tokenizeStories(documents);
 		// Create dictionary.
+		System.out.println("Creating dictionary...");
 		ArrayList<String> dictionary = createDictionary(documents);
+		System.out.println("Creating dictionary DONE.");
 		// Calculate topic probabilities.
 		StoryClassifier.setTopicProbabilities(calculateTopicProbabilities(documents));
 		// Count terms for each topic.
 		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
 		// Calculate probabilities of each term for each topic.
+		System.out.println("Calculating probabilities of terms...");
 		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts, dictionary));
+		System.out.println("Calculating probabilities of terms DONE.");
 		// Try to classify test stories.
+		System.out.println("Classifying test documents...");
 		StoryClassifier.classifyTestDocuments(documents);
 		HashMap<String, HashMap<String, Double>> mutualInfos = calculateMutualInformation(documents, dictionary);
 		Set<String> distinctiveTerms = new HashSet<>();
 		for (String topic : Constants.topicsSet) {
 			distinctiveTerms.addAll(mutualInfos.get(topic).keySet());
 		}
-		System.out.println("distinct " + distinctiveTerms.size());
-		System.out.println("Updating documents with mutual information...");
 		ArrayList<ArrayList<NewsStory>> updatedDocuments = updateDocumentsWithWords(documents, distinctiveTerms);
-		// Create dictionary.
-		System.out.println("Creating dictionary with mutual information...");
 		ArrayList<String> updatedDictionary = createDictionary(updatedDocuments);
-		System.out.println("Updating term counts with mutual information...");
 		HashMap<String, HashMap<String, Integer>> updatedTermCounts = countTermsPerTopic(updatedDictionary, updatedDocuments);
 		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts, updatedDictionary));
 		System.out.println("Classifying test documents with mutual information...");
-		StoryClassifier.classifyTestDocuments(updatedDocuments);
-		System.out.println("Classifying test documents with mutual information DONE.");	
-	
+		StoryClassifier.classifyTestDocuments(updatedDocuments);	
 	}
 
 	private static ArrayList<ArrayList<NewsStory>> updateDocumentsWithWords(ArrayList<ArrayList<NewsStory>> documents,
@@ -59,11 +57,21 @@ public class Main {
 				for (String token : story.titleTokens) {
 					if (distinctiveTerms.contains(token)) {
 						updatedStory.titleTokens.add(token);
+						if (	updatedStory.termCounts.containsKey(token)) {
+							updatedStory.termCounts.put(token, updatedStory.termCounts.get(token) + 1);
+						} else {
+							updatedStory.termCounts.put(token, 1);
+						}
 					}
 				}
 				for (String token : story.bodyTokens) {
 					if (distinctiveTerms.contains(token)) {
 						updatedStory.bodyTokens.add(token);
+						if (	updatedStory.termCounts.containsKey(token)) {
+							updatedStory.termCounts.put(token, updatedStory.termCounts.get(token) + 1);
+						} else {
+							updatedStory.termCounts.put(token, 1);
+						}
 					}
 				}
 				updatedDoc.add(updatedStory);
@@ -150,18 +158,15 @@ public class Main {
 			allMutualInfos.put(topic, mutualInfos);
 		}
 		System.out.println("Calculating mutual information DONE.");
-		System.out.println(allMutualInfos.toString());
 		return allMutualInfos;
 	}
 
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
 			HashMap<String, HashMap<String, Integer>> termCounts, ArrayList<String> dictionary) {
-		System.out.println("Calculating probabilities of terms...");
 		HashMap<String, HashMap<String, Double>> result = new HashMap<>();
 		for (String topic : Constants.topicsSet) {
 			result.put(topic, calculateTermProbabilitiesForTopic(termCounts.get(topic), dictionary));	
 		}		
-		System.out.println("Calculating probabilities of terms DONE.");
 		return result;
 	}
 
@@ -245,7 +250,6 @@ public class Main {
 	 * Creates an array list of all unique stemmed words in all documents.
 	 */
 	private static ArrayList<String> createDictionary(ArrayList<ArrayList<NewsStory>> documents) {
-		System.out.println("Creating dictionary...");
 		ArrayList<String> dictionary = new ArrayList<>();
 		for (int i = 0; i < documents.size(); i++) {
 			for (NewsStory story : documents.get(i)) {
@@ -260,7 +264,6 @@ public class Main {
 				}
 			}
 		}
-		System.out.println("Creating dictionary DONE.");
 		return dictionary;
 	}
 
