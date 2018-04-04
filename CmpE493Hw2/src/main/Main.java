@@ -104,13 +104,12 @@ public class Main {
 		for (String topic : Constants.topicsSet) {
 			totalDocCount += documentCounts.get(topic);
 		}
-		
 		HashMap<String, HashMap<String, Double>> allMutualInfos = new HashMap<>();
 		System.out.println("Calculating mutual information...");
 		for (String topic : Constants.topicsSet) {
 			HashMap<String, Double> mutualInfos = new HashMap<>();
-			for (String term : termCounts.get(topic).keySet()) {
-				int yTermYTopic = termCounts.get(topic).get(term);
+			for (String term : dictionary) {
+				int yTermYTopic = (termCounts.get(topic).containsKey(term) ? termCounts.get(topic).get(term) : 1);
 				int yTermNTopic = 1;
 				for (String _topic : Constants.topicsSet) {
 					if (!_topic.equals(topic) && termCounts.get(_topic).containsKey(term)) {
@@ -118,12 +117,7 @@ public class Main {
 					}
 				}		
 				int nTermYTopic = documentCounts.get(topic) - yTermYTopic;
-				int nTermNTopic = 1;
-				for (String _topic : Constants.topicsSet) {
-					if (!_topic.equals(topic) && !termCounts.get(_topic).containsKey(term)) {
-						nTermNTopic += documentCounts.get(_topic);
-					}
-				}
+				int nTermNTopic = totalDocCount - documentCounts.get(topic) - yTermNTopic;
 				
 				double part1 = (yTermYTopic/(double)totalDocCount) 
 						* Math.log((yTermYTopic*totalDocCount) / (double)((yTermYTopic + yTermNTopic)*(yTermYTopic + nTermYTopic)));
