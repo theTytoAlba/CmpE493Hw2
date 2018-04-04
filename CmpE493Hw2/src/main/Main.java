@@ -25,14 +25,13 @@ public class Main {
 		// Calculate probabilities of each term for each topic.
 		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts, dictionary));
 		// Try to classify test stories.
-		System.out.println("Classifying test documents...");
 		StoryClassifier.classifyTestDocuments(documents);
-		System.out.println("Classifying test documents DONE.");
 		HashMap<String, HashMap<String, Double>> mutualInfos = calculateMutualInformation(documents, dictionary);
 		Set<String> distinctiveTerms = new HashSet<>();
 		for (String topic : Constants.topicsSet) {
 			distinctiveTerms.addAll(mutualInfos.get(topic).keySet());
 		}
+		System.out.println("distinct " + distinctiveTerms.size());
 		System.out.println("Updating documents with mutual information...");
 		ArrayList<ArrayList<NewsStory>> updatedDocuments = updateDocumentsWithWords(documents, distinctiveTerms);
 		// Create dictionary.
@@ -76,7 +75,6 @@ public class Main {
 
 	private static HashMap<String, HashMap<String, Double>> calculateMutualInformation(ArrayList<ArrayList<NewsStory>> documents,
 			ArrayList<String> dictionary) {
-		System.out.println("Creating term counts data...");
 		HashMap<String, HashMap<String, Integer>> termCounts = new HashMap<>();
 		HashMap<String, Integer> documentCounts = new HashMap<>();
 		for (String topic : Constants.topicsSet) {
@@ -106,23 +104,21 @@ public class Main {
 		for (String topic : Constants.topicsSet) {
 			totalDocCount += documentCounts.get(topic);
 		}
-		System.out.println("Creating term counts data DONE.");
 		
 		HashMap<String, HashMap<String, Double>> allMutualInfos = new HashMap<>();
 		System.out.println("Calculating mutual information...");
 		for (String topic : Constants.topicsSet) {
-			System.out.println("Calculating mutual information for " + topic + "...");
 			HashMap<String, Double> mutualInfos = new HashMap<>();
 			for (String term : termCounts.get(topic).keySet()) {
 				int yTermYTopic = termCounts.get(topic).get(term);
-				int yTermNTopic = 1;//0;
+				int yTermNTopic = 1;
 				for (String _topic : Constants.topicsSet) {
 					if (!_topic.equals(topic) && termCounts.get(_topic).containsKey(term)) {
 						yTermNTopic += termCounts.get(_topic).get(term);
 					}
 				}		
 				int nTermYTopic = documentCounts.get(topic) - yTermYTopic;
-				int nTermNTopic = 1;//0;
+				int nTermNTopic = 1;
 				for (String _topic : Constants.topicsSet) {
 					if (!_topic.equals(topic) && !termCounts.get(_topic).containsKey(term)) {
 						nTermNTopic += documentCounts.get(_topic);
@@ -139,14 +135,6 @@ public class Main {
 						* Math.log((nTermNTopic*totalDocCount) / (double)((nTermYTopic + nTermNTopic)*(yTermNTopic + nTermNTopic)));
 						
 				double mutualInformation = part1 + part2 + part3 + part4;
-				// The term only occurs in the documents belonging to topic, maximum mutual information.
-				if (yTermNTopic == 0) {
-					mutualInformation = Double.MAX_VALUE;
-				}
-				// There are no documents that do not contain this term in other topics, minimum mutual information.
-				if (nTermNTopic == 0) {
-					mutualInformation = Double.MIN_VALUE;
-				}
 				
 				if (mutualInfos.size() < 50) {
 					mutualInfos.put(term, mutualInformation);
@@ -159,9 +147,7 @@ public class Main {
 							minKey = key;
 						}	
 					}
-					//System.out.println(minVal + "AAAAAKSDJFSKLFJ");
 					if (minVal < mutualInformation) {
-						System.out.println("aaa" + minVal + " " + mutualInformation);
 						mutualInfos.remove(minKey);
 						mutualInfos.put(term, mutualInformation);
 					}
@@ -203,12 +189,10 @@ public class Main {
 
 	private static HashMap<String, HashMap<String, Integer>> countTermsPerTopic(ArrayList<String> dictionary,
 			ArrayList<ArrayList<NewsStory>> documents) {
-		System.out.println("Counting terms for topics...");
 		HashMap<String, HashMap<String, Integer>> result = new HashMap<>();
 		for (String topic : Constants.topicsSet) {
 			result.put(topic, countTermsForTopic(topic, dictionary, documents));	
 		}
-		System.out.println("Counting terms for topics DONE.");
 		return result;
 	}
 
@@ -243,7 +227,6 @@ public class Main {
 		for (String topic : Constants.topicsSet) {
 			probs.put(topic, 0);
 		}
-		System.out.println("Calculating topic probabilities...");
 		for (int i = 0; i < documents.size(); i++) {
 				for (NewsStory story : documents.get(i)) {
 					if (!story.lewissplit.equals("TRAIN")) {
@@ -261,7 +244,6 @@ public class Main {
 		for (String topic : probs.keySet()) {
 			result.put(topic, Math.log(probs.get(topic)/(double)storyCount));
 		}
-		System.out.println("Calculating topic probabilities DONE.");
 		return result;
 	}
 
@@ -272,7 +254,6 @@ public class Main {
 		System.out.println("Creating dictionary...");
 		ArrayList<String> dictionary = new ArrayList<>();
 		for (int i = 0; i < documents.size(); i++) {
-			printProgress("Processing document", i+1, 22);
 			for (NewsStory story : documents.get(i)) {
 				// Only consider files for training.
 				if (!story.lewissplit.equals("TRAIN")) {

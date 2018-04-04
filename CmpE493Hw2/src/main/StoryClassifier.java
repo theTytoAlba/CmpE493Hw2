@@ -16,6 +16,7 @@ public class StoryClassifier {
 	}
 
 	public static void classifyTestDocuments(ArrayList<ArrayList<NewsStory>> documents) {
+		System.out.println("Classifying test documents...");
 		int correct = 0;
 		int total = 0;
 		for (ArrayList<NewsStory> doc : documents) {
@@ -38,6 +39,7 @@ public class StoryClassifier {
 				total++;
 			}
 		}
+		System.out.println("Classifying test documents DONE. ");
 		System.out.println("Correctness: " + correct + "/" + total + "=" + correct/(double)total);
 	}
 
