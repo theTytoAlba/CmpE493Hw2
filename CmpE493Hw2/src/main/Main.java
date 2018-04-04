@@ -16,30 +16,6 @@ public class Main {
 		StoryTokenizer.setStopWords(readStopWords());
 		// Tokenize the stories.
 		documents = tokenizeStories(documents);
-		
-		HashMap<String, Integer> mapTest = new HashMap<>();
-		HashMap<String, Integer> mapTrain = new HashMap<>();
-		for (String topic : Constants.topicsSet) {
-			mapTest.put(topic, 0);
-			mapTrain.put(topic, 0);
-		}
-		for (ArrayList<NewsStory> doc :documents) {
-			for (NewsStory story : doc) {
-				if (story.lewissplit.equals("TEST")) {
-					mapTest.put(story.topic, mapTest.get(story.topic)+1);
-				}
-				if (story.lewissplit.equals("TRAIN")) {
-					//System.out.println(story.storyID);
-					mapTrain.put(story.topic, mapTrain.get(story.topic)+1);
-				}
-				
-			}
-		}
-		
-		System.out.println("test" + mapTest.toString() + "train" + mapTrain.toString());
-		if (true) {
-			return;	
-		}
 		// Create dictionary.
 		ArrayList<String> dictionary = createDictionary(documents);
 		// Calculate topic probabilities.
@@ -47,7 +23,7 @@ public class Main {
 		// Count terms for each topic.
 		HashMap<String, HashMap<String, Integer>> termCounts = countTermsPerTopic(dictionary, documents);
 		// Calculate probabilities of each term for each topic.
-		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts, dictionary.size()));
+		StoryClassifier.setTermProbabilities(calculateTermProbabilities(termCounts, dictionary));
 		// Try to classify test stories.
 		System.out.println("Classifying test documents...");
 		StoryClassifier.classifyTestDocuments(documents);
@@ -58,14 +34,13 @@ public class Main {
 			distinctiveTerms.addAll(mutualInfos.get(topic).keySet());
 		}
 		System.out.println("Updating documents with mutual information...");
-		//System.out.println(distinctiveTerms.size() + "AAA");
 		ArrayList<ArrayList<NewsStory>> updatedDocuments = updateDocumentsWithWords(documents, distinctiveTerms);
 		// Create dictionary.
 		System.out.println("Creating dictionary with mutual information...");
 		ArrayList<String> updatedDictionary = createDictionary(updatedDocuments);
 		System.out.println("Updating term counts with mutual information...");
 		HashMap<String, HashMap<String, Integer>> updatedTermCounts = countTermsPerTopic(updatedDictionary, updatedDocuments);
-		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts, updatedDictionary.size()));
+		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts, updatedDictionary));
 		System.out.println("Classifying test documents with mutual information...");
 		StoryClassifier.classifyTestDocuments(updatedDocuments);
 		System.out.println("Classifying test documents with mutual information DONE.");	
@@ -200,29 +175,27 @@ public class Main {
 	}
 
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
-			HashMap<String, HashMap<String, Integer>> termCounts, int dictionarySize) {
+			HashMap<String, HashMap<String, Integer>> termCounts, ArrayList<String> dictionary) {
 		System.out.println("Calculating probabilities of terms...");
 		HashMap<String, HashMap<String, Double>> result = new HashMap<>();
 		for (String topic : Constants.topicsSet) {
-			//System.out.println("Calculating probabilities for topic " + topic + "...");
-			result.put(topic, calculateTermProbabilitiesForTopic(termCounts.get(topic), dictionarySize));	
+			result.put(topic, calculateTermProbabilitiesForTopic(termCounts.get(topic), dictionary));	
 		}		
 		System.out.println("Calculating probabilities of terms DONE.");
-		//System.out.println(termCounts.keySet().toString());
 		return result;
 	}
 
-	private static HashMap<String, Double> calculateTermProbabilitiesForTopic(HashMap<String, Integer> termCountsOfTopic, int dictionarySize) {
+	private static HashMap<String, Double> calculateTermProbabilitiesForTopic(HashMap<String, Integer> termCountsOfTopic, ArrayList<String> dictionary) {
 		HashMap<String, Double> probs = new HashMap<>();
-		for (String term : termCountsOfTopic.keySet()) {
+		for (String term : dictionary) {
 			// Numerator: number of times this term occurs in this topic + 1.
-			int numerator = termCountsOfTopic.get(term) + 1;
+			int numerator = (termCountsOfTopic.containsKey(term) ? termCountsOfTopic.get(term) : 0) + 1;
 			// Denominator: total number of terms in this topic + dictionary size.
 			int denominator = 0;
 			for (int count : termCountsOfTopic.values()) {
 				denominator += count;
 			}
-			denominator += dictionarySize;
+			denominator += dictionary.size();
 			probs.put(term, Math.log(numerator/(double)denominator));
 		}
 		return probs;
@@ -242,7 +215,6 @@ public class Main {
 	private static HashMap<String, Integer> countTermsForTopic(String topic, ArrayList<String> dictionary,
 			ArrayList<ArrayList<NewsStory>> documents) {
 		HashMap<String, Integer> result = new HashMap<>();
-		System.out.println("Processing topic " + topic+ "...");
 		for (ArrayList<NewsStory> doc : documents) {
 			for (NewsStory story : doc) {
 				// Only consider TRAIN documents from this topic.
@@ -355,7 +327,6 @@ public class Main {
 	 */
 	private static ArrayList<String> readStopWords() {
 		ArrayList<String> stopwords = new ArrayList<>();
-		System.out.println("Reading stop words...");
 		try (BufferedReader br = new BufferedReader(new FileReader(Constants.stopWordsLocation))) {
 			String line;
 		    while ((line = br.readLine()) != null) {
@@ -365,7 +336,6 @@ public class Main {
 			System.out.println("Error while reading stopwords form Dataset/stopwords.txt");
 			e.printStackTrace();
 		}
-		System.out.println("Reading stop words DONE.");
 		return stopwords;
 	}
 	

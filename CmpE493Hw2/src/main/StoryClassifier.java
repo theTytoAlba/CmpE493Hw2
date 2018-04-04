@@ -43,16 +43,9 @@ public class StoryClassifier {
 
 	private static double calculateProbForTopic(String topic, NewsStory story) {
 		double result = topicProbabilities.get(topic);
-		// Process title
-		for (String term : story.titleTokens) {
+		for (String term : story.termCounts.keySet()) {
 			if (termProbabilities.get(topic).containsKey(term)) {
-				result += termProbabilities.get(topic).get(term);
-			}
-		}
-		// Process body
-		for (String term : story.bodyTokens) {
-			if (termProbabilities.get(topic).containsKey(term)) {
-				result += termProbabilities.get(topic).get(term);
+				result += termProbabilities.get(topic).get(term) * story.termCounts.get(term);
 			}
 		}
 		return result;
