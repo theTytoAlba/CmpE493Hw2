@@ -16,6 +16,14 @@ public class StoryClassifier {
 	}
 
 	public static void classifyTestDocuments(ArrayList<ArrayList<NewsStory>> documents) {
+		HashMap<String, Integer> precCorrect = new HashMap<>();
+		HashMap<String, Integer> precFalse = new HashMap<>();
+		HashMap<String, Integer> recFalse = new HashMap<>();
+		for (String top : Constants.topicsSet) {
+			precCorrect.put(top, 0)	;
+			precFalse.put(top, 0)	;
+			recFalse.put(top, 0)	;
+		}
 		int correct = 0;
 		int total = 0;
 		for (ArrayList<NewsStory> doc : documents) {
@@ -34,11 +42,26 @@ public class StoryClassifier {
 				}
 				if (story.topic.equals(currentType)) {
 					correct++;
+					precCorrect.put(currentType, precCorrect.get(currentType) + 1);
+				} else {
+					precFalse.put(currentType, precFalse.get(currentType) + 1);
+					recFalse.put(story.topic, precFalse.get(story.topic) + 1);
 				}
 				total++;
 			}
 		}
-		System.out.println("Correctness: " + correct + "/" + total + "=" + correct/(double)total);
+		System.out.println();
+		System.out.println("Correctly classified: " + correct + "/" + total + "=" + correct/(double)total);
+		System.out.println();
+		System.out.println("Correcly classified documents by topic: " + precCorrect.toString());
+		System.out.println("Falsely classified documents by their classified topic: " +precFalse.toString());
+		System.out.println("Falsely classified documents by their actual topic: " + recFalse.toString());
+		System.out.println();
+		for (String top : Constants.topicsSet) {
+			System.out.println("Precision for topic " + top + ": " +  (precCorrect.get(top)/(double)(precCorrect.get(top) + precFalse.get(top))));
+			System.out.println("Recall for topic " + top + ": " +(precCorrect.get(top)/(double)(precCorrect.get(top) + recFalse.get(top))));
+		}
+		System.out.println();
 	}
 
 	private static double calculateProbForTopic(String topic, NewsStory story) {
