@@ -33,18 +33,27 @@ public class Main {
 		StoryClassifier.classifyTestDocuments(documents);
 		// Calculate mutual information.
 		HashMap<String, HashMap<String, Double>> mutualInfos = calculateMutualInformation(documents, dictionary);
+		// Merge the distinctive words to create new vocabulary.
 		Set<String> distinctiveTerms = new HashSet<>();
 		for (String topic : Constants.topicsSet) {
 			distinctiveTerms.addAll(mutualInfos.get(topic).keySet());
 		}
+		// Discard all other words.
 		ArrayList<ArrayList<NewsStory>> updatedDocuments = updateDocumentsWithWords(documents, distinctiveTerms);
+		// Update the dictionary.
 		ArrayList<String> updatedDictionary = createDictionary(updatedDocuments);
+		// Recount the terms.
 		HashMap<String, HashMap<String, Integer>> updatedTermCounts = countTermsPerTopic(updatedDictionary, updatedDocuments);
+		// Recalculate the probabilities
 		StoryClassifier.setTermProbabilities(calculateTermProbabilities(updatedTermCounts, updatedDictionary));
+		// Classify with the updated probabilities.
 		System.out.println("Classifying test documents with mutual information...");
 		StoryClassifier.classifyTestDocuments(updatedDocuments);	
 	}
 
+	/**
+	 * Discards all tokens that are not in the distinctive terms set.
+	 */
 	private static ArrayList<ArrayList<NewsStory>> updateDocumentsWithWords(ArrayList<ArrayList<NewsStory>> documents,
 			Set<String> distinctiveTerms) {
 		ArrayList<ArrayList<NewsStory>> updatedDocuments = new ArrayList<>();
@@ -52,9 +61,11 @@ public class Main {
 			ArrayList<NewsStory> updatedDoc = new ArrayList<>();
 			for (NewsStory story : doc) {
 				NewsStory updatedStory = new NewsStory();
+				// Keep the fixed information
 				updatedStory.storyID = story.storyID;
 				updatedStory.lewissplit = story.lewissplit;
 				updatedStory.topic = story.topic;
+				// Update title
 				for (String token : story.titleTokens) {
 					if (distinctiveTerms.contains(token)) {
 						updatedStory.titleTokens.add(token);
@@ -65,6 +76,7 @@ public class Main {
 						}
 					}
 				}
+				// Update body
 				for (String token : story.bodyTokens) {
 					if (distinctiveTerms.contains(token)) {
 						updatedStory.bodyTokens.add(token);
@@ -82,16 +94,22 @@ public class Main {
 		return updatedDocuments;
 	}
 
+	/**
+	 * Calculates the most distinctive 50 words of each topic.
+	 */
 	private static HashMap<String, HashMap<String, Double>> calculateMutualInformation(ArrayList<ArrayList<NewsStory>> documents,
 			ArrayList<String> dictionary) {
+		// Initialize the arrays.
 		HashMap<String, HashMap<String, Integer>> termCounts = new HashMap<>();
 		HashMap<String, Integer> documentCounts = new HashMap<>();
 		for (String topic : Constants.topicsSet) {
 			termCounts.put(topic, new HashMap<String, Integer>());
 			documentCounts.put(topic, 0);
 		}
+		// Fill in the arrays.
 		for (ArrayList<NewsStory> doc : documents) {
 			for (NewsStory story : doc) {
+				// Only use training documents.
 				if (!story.lewissplit.equals("TRAIN")) {
 					continue;
 				}
@@ -109,25 +127,32 @@ public class Main {
 				documentCounts.put(currentTopic, documentCounts.get(currentTopic) + 1);
 			}
 		}
+		// Calculate total document count.
 		int totalDocCount = 0;
 		for (String topic : Constants.topicsSet) {
 			totalDocCount += documentCounts.get(topic);
 		}
+		// Calculate mutual information for each term, using the values found above.
 		HashMap<String, HashMap<String, Double>> allMutualInfos = new HashMap<>();
 		System.out.println("Calculating mutual information...");
 		for (String topic : Constants.topicsSet) {
 			HashMap<String, Double> mutualInfos = new HashMap<>();
 			for (String term : dictionary) {
+				// The stories containing this term and are from this topic.
 				int yTermYTopic = (termCounts.get(topic).containsKey(term) ? termCounts.get(topic).get(term) : 1);
+				// The stories containing this term and are not from this topic.
 				int yTermNTopic = 1;
 				for (String _topic : Constants.topicsSet) {
 					if (!_topic.equals(topic) && termCounts.get(_topic).containsKey(term)) {
 						yTermNTopic += termCounts.get(_topic).get(term);
 					}
 				}		
+				// The stories not containing this term and are from this topic.
 				int nTermYTopic = documentCounts.get(topic) - yTermYTopic;
+				// The stories not containing this term and are not from this topic.
 				int nTermNTopic = totalDocCount - documentCounts.get(topic) - yTermNTopic;
 				
+				// Prepare the parts of the sum
 				double part1 = (yTermYTopic/(double)totalDocCount) 
 						* Math.log((yTermYTopic*totalDocCount) / (double)((yTermYTopic + yTermNTopic)*(yTermYTopic + nTermYTopic)));
 				double part2 = (nTermYTopic/(double)totalDocCount) 
@@ -137,8 +162,10 @@ public class Main {
 				double part4 = (nTermNTopic/(double)totalDocCount) 
 						* Math.log((nTermNTopic*totalDocCount) / (double)((nTermYTopic + nTermNTopic)*(yTermNTopic + nTermNTopic)));
 						
+				// Calculate mutual information of the term.
 				double mutualInformation = part1 + part2 + part3 + part4;
 				
+				// Only keep 50 words with the highest mutual information values.
 				if (mutualInfos.size() < 50) {
 					mutualInfos.put(term, mutualInformation);
 				} else {
