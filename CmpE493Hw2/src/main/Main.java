@@ -31,6 +31,7 @@ public class Main {
 		// Try to classify test stories.
 		System.out.println("Classifying test documents...");
 		StoryClassifier.classifyTestDocuments(documents);
+		// Calculate mutual information.
 		HashMap<String, HashMap<String, Double>> mutualInfos = calculateMutualInformation(documents, dictionary);
 		Set<String> distinctiveTerms = new HashSet<>();
 		for (String topic : Constants.topicsSet) {
@@ -161,6 +162,9 @@ public class Main {
 		return allMutualInfos;
 	}
 
+	/**
+	 * Returns a map containing the term probabilities for each topic.
+	 */
 	private static HashMap<String, HashMap<String, Double>> calculateTermProbabilities(
 			HashMap<String, HashMap<String, Integer>> termCounts, ArrayList<String> dictionary) {
 		HashMap<String, HashMap<String, Double>> result = new HashMap<>();
@@ -170,6 +174,9 @@ public class Main {
 		return result;
 	}
 
+	/**
+	 * Returns a map containing the term probabilities for a specified topic.
+	 */
 	private static HashMap<String, Double> calculateTermProbabilitiesForTopic(HashMap<String, Integer> termCountsOfTopic, ArrayList<String> dictionary) {
 		HashMap<String, Double> probs = new HashMap<>();
 		for (String term : dictionary) {
@@ -186,6 +193,9 @@ public class Main {
 		return probs;
 	}
 
+	/**
+	 * Returns a map containing the counts of terms for each topic.
+	 */
 	private static HashMap<String, HashMap<String, Integer>> countTermsPerTopic(ArrayList<String> dictionary,
 			ArrayList<ArrayList<NewsStory>> documents) {
 		HashMap<String, HashMap<String, Integer>> result = new HashMap<>();
@@ -194,7 +204,10 @@ public class Main {
 		}
 		return result;
 	}
-
+	
+	/**
+	 * Returns a map containing the counts of terms for the specified topic.
+	 */
 	private static HashMap<String, Integer> countTermsForTopic(String topic, ArrayList<String> dictionary,
 			ArrayList<ArrayList<NewsStory>> documents) {
 		HashMap<String, Integer> result = new HashMap<>();
@@ -221,29 +234,34 @@ public class Main {
 	 * Returns a map of the topic and the number of stories that contain that topic.
 	 */
 	private static HashMap<String, Double> calculateTopicProbabilities(ArrayList<ArrayList<NewsStory>> documents) {
-		HashMap<String, Integer> probs = new HashMap<>();
+		HashMap<String, Integer> topicCounts = new HashMap<>();
 		int storyCount = 0;
+		// Initialize the counts map.
 		for (String topic : Constants.topicsSet) {
-			probs.put(topic, 0);
+			topicCounts.put(topic, 0);
 		}
+		// Count the stories of each topic
 		for (int i = 0; i < documents.size(); i++) {
 				for (NewsStory story : documents.get(i)) {
+					// Only consider the training documents.
 					if (!story.lewissplit.equals("TRAIN")) {
 						continue;
 					}
 					storyCount++;
+					
 					for (String topic : Constants.topicsSet) {
 						if (story.topic.equals(topic)) {
-							probs.put(topic, probs.get(topic) + 1);	
+							topicCounts.put(topic, topicCounts.get(topic) + 1);	
 						}
 					}
 				}
 		}
-		HashMap<String, Double> result = new HashMap<>();
-		for (String topic : probs.keySet()) {
-			result.put(topic, Math.log(probs.get(topic)/(double)storyCount));
+		// Calculate probabilities
+		HashMap<String, Double> topicProbabilities = new HashMap<>();
+		for (String topic : topicCounts.keySet()) {
+			topicProbabilities.put(topic, Math.log(topicCounts.get(topic)/(double)storyCount));
 		}
-		return result;
+		return topicProbabilities;
 	}
 
 	/**

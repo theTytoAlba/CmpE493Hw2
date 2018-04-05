@@ -92,7 +92,7 @@ public class StoryExtractor {
 	 * the field _text_ is story's content (between text tags)
 	 * the field _storyID_ is the story's id (given as NEWID)
 	 * the field _lewissplit_ is the story's type (given as LEWISSPLIT)
-	 * the field _topics_ is the array of string topics.
+	 * the field _topic_ is the topic string.
 	 */
 	private static ArrayList<NewsStory> extractTextsIDsTopicsLewis(ArrayList<String> tokens) {
 		ArrayList<NewsStory> stories = new ArrayList<>();
